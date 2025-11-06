@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 import { ThemedText } from "./ThemedText";
 
@@ -14,11 +15,13 @@ export function Logo({
 }: LogoProps) {
   return (
     <View style={styles.container}>
-      {/* Tinder-style flame icon using emoji for now */}
+      {/* Tinder logo from assets */}
       <View style={[styles.logoContainer, { width: size, height: size }]}>
-        <ThemedText style={[styles.logoEmoji, { fontSize: size * 0.7 }]}>
-          🔥
-        </ThemedText>
+        <Image
+          source={require("@/assets/images/tinder-logo.png")}
+          style={{ width: size, height: size }}
+          contentFit="contain"
+        />
       </View>
 
       {showText && (
@@ -40,9 +43,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 999,
     backgroundColor: "transparent",
-  },
-  logoEmoji: {
-    textAlign: "center",
   },
   appName: {
     marginTop: 16,

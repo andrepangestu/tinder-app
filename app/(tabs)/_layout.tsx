@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
+import { Image } from "react-native";
 
-import { IconSymbol } from "@/src/components/atoms";
 import { HapticTab } from "@/src/components/molecules";
 import { Colors } from "@/src/constants/theme";
 import { useColorScheme } from "@/src/hooks/use-color-scheme";
@@ -21,16 +21,24 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <Image
+              source={require("../../assets/images/tinder-icon.png")}
+              style={{ width: 28, height: 28 }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Explore",
+          title: "Liked",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
+            <Image
+              source={require("../../assets/images/star.png")}
+              style={{ width: 28, height: 28 }}
+              resizeMode="contain"
+            />
           ),
         }}
       />

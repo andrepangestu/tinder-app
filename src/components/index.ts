@@ -2,4 +2,4 @@
 export * from "./atoms";
 export * from "./molecules";
 export * from "./organisms";
-// export * from './templates'; // Uncomment when templates are added
+export * from "./templates";

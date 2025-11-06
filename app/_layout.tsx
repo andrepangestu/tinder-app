@@ -1,5 +1,5 @@
 import { SplashScreen } from "@/src/components/organisms";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as ExpoSplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 
@@ -9,6 +9,7 @@ ExpoSplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
   const [splashAnimationFinished, setSplashAnimationFinished] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Simulate loading assets/fonts/etc
@@ -29,8 +30,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (appReady && splashAnimationFinished) {
       ExpoSplashScreen.hideAsync();
+      // Navigate to home screen after splash
+      router.replace("/(tabs)");
     }
-  }, [appReady, splashAnimationFinished]);
+  }, [appReady, splashAnimationFinished, router]);
 
   const showSplash = !appReady || !splashAnimationFinished;
 
