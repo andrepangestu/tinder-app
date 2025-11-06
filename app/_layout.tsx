@@ -1,24 +1,45 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { SplashScreen } from "@/src/components/organisms";
+import { Stack } from "expo-router";
+import * as ExpoSplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+ExpoSplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [appReady, setAppReady] = useState(false);
+  const [splashAnimationFinished, setSplashAnimationFinished] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading assets/fonts/etc
+    async function prepare() {
+      try {
+        // Load fonts, assets, etc here
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setAppReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  useEffect(() => {
+    if (appReady && splashAnimationFinished) {
+      ExpoSplashScreen.hideAsync();
+    }
+  }, [appReady, splashAnimationFinished]);
+
+  const showSplash = !appReady || !splashAnimationFinished;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <>
+      <Stack screenOptions={{ headerShown: false }} />
+      {showSplash && (
+        <SplashScreen onFinish={() => setSplashAnimationFinished(true)} />
+      )}
+    </>
   );
 }
