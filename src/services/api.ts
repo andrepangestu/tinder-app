@@ -156,3 +156,185 @@ export async function prefetchNextPage(
 ): Promise<PaginatedResponse<ApiPerson>> {
   return fetchRecommendedPeople(page, perPage);
 }
+
+// ========================================
+// SWIPE ACTIONS API
+// ========================================
+
+interface SwipeActionResponse {
+  status: string;
+  message: string;
+  data?: {
+    person_id: number;
+    action: "like" | "dislike";
+    timestamp?: string;
+  };
+}
+
+/**
+ * Send like action to API
+ * @param personId - ID of the person to like
+ */
+export async function likePerson(
+  personId: number
+): Promise<SwipeActionResponse> {
+  try {
+    const url = `${API_BASE_URL}/people/${personId}/like`;
+
+    console.log("👍 Liking person:", personId);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: SwipeActionResponse = await response.json();
+    console.log("✅ Like response:", data);
+
+    return data;
+  } catch (error) {
+    console.error("❌ Error liking person:", error);
+    throw error;
+  }
+}
+
+/**
+ * Send dislike action to API
+ * @param personId - ID of the person to dislike
+ */
+export async function dislikePerson(
+  personId: number
+): Promise<SwipeActionResponse> {
+  try {
+    const url = `${API_BASE_URL}/people/${personId}/dislike`;
+
+    console.log("👎 Disliking person:", personId);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: SwipeActionResponse = await response.json();
+    console.log("✅ Dislike response:", data);
+
+    return data;
+  } catch (error) {
+    console.error("❌ Error disliking person:", error);
+    throw error;
+  }
+}
+
+// ========================================
+// ACTIVITIES API - Liked People
+// ========================================
+
+// Liked Activity Response Format
+interface LikedActivityResponse {
+  status: string;
+  message: string;
+  data: Array<{
+    activity_id: number;
+    person_id: number;
+    name: string;
+    age: number;
+    location: string;
+    photo_url: string | null;
+    liked_at: string;
+  }>;
+  meta: {
+    current_page: number;
+    total: number;
+    per_page: number;
+    last_page: number;
+  };
+}
+
+/**
+ * Fetch liked people with pagination
+ * @param page - Page number
+ * @param perPage - Items per page
+ */
+export async function fetchLikedPeople(
+  page: number = 1,
+  perPage: number = 10,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<ApiPerson>> {
+  try {
+    const url = new URL(`${API_BASE_URL}/people/activities/liked`);
+    url.searchParams.set("per_page", String(perPage));
+    url.searchParams.set("page", String(page));
+
+    console.log("💖 Fetching liked people:", page, perPage);
+
+    const response = await fetch(url.toString(), {
+      signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const apiResponse: LikedActivityResponse = await response.json();
+
+    // Validate response structure
+    if (!apiResponse || !Array.isArray(apiResponse.data) || !apiResponse.meta) {
+      throw new Error("Invalid response format from API");
+    }
+
+    // Transform liked activities to ApiPerson format
+    const transformedData: PaginatedResponse<ApiPerson> = {
+      data: apiResponse.data.map((activity) => ({
+        // Core fields from API
+        id: activity.person_id,
+        name: activity.name,
+        age: activity.age,
+        location: activity.location,
+        image_url: activity.photo_url || "https://picsum.photos/200/300",
+        created_at: activity.liked_at,
+        updated_at: activity.liked_at,
+        likes_count: 0,
+        dislikes_count: 0,
+        // Additional computed fields
+        distance: parseInt(activity.location) || 0,
+        photos: activity.photo_url
+          ? [activity.photo_url]
+          : ["https://picsum.photos/200/300"],
+        verified: false,
+        bio: "",
+      })),
+      current_page: apiResponse.meta.current_page,
+      per_page: apiResponse.meta.per_page,
+      total: apiResponse.meta.total,
+      last_page: apiResponse.meta.last_page,
+    };
+
+    console.log("✅ Liked people fetched:", transformedData.data.length);
+    return transformedData;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    console.error("❌ Error fetching liked people:", error);
+    throw error;
+  }
+}

@@ -2,6 +2,7 @@ import { Logo } from "@/src/components/atoms/Logo";
 import { ActionButtons } from "@/src/components/molecules/ActionButtons";
 import { NoMoreCardsScreen, SwipeCard } from "@/src/components/organisms";
 import { useInfiniteRecommendedPeople } from "@/src/hooks";
+import { dislikePerson, likePerson } from "@/src/services/api";
 import {
   currentSwipeIndexState,
   likedUsersState,
@@ -68,6 +69,12 @@ export function MainSwipeTemplate() {
     // ✅ FIX: Update Recoil states OUTSIDE of state updater
     if (currentUser) {
       setPassedUsers((prev) => [...prev, currentUser]);
+
+      // 📡 Send dislike to API (fire and forget, non-blocking)
+      dislikePerson(Number(currentUser.id)).catch((error) => {
+        console.error("Failed to send dislike:", error);
+        // Silently fail - user experience not affected
+      });
     }
 
     // Update index separately
@@ -95,6 +102,12 @@ export function MainSwipeTemplate() {
     // ✅ FIX: Update Recoil states OUTSIDE of state updater
     if (currentUser) {
       setLikedUsers((prev) => [...prev, currentUser]);
+
+      // 📡 Send like to API (fire and forget, non-blocking)
+      likePerson(Number(currentUser.id)).catch((error) => {
+        console.error("Failed to send like:", error);
+        // Silently fail - user experience not affected
+      });
     }
 
     // Update index separately
