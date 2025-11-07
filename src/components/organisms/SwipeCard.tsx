@@ -23,11 +23,6 @@ function SwipeCardComponent({
   const isMounted = useRef(true);
   const isTopRef = useRef(isTop);
 
-  console.log(
-    `🎴 Card ${user.name} (${user.id}) - Component render, isTop:`,
-    isTop
-  );
-
   // CRITICAL: Update isTopRef immediately before creating PanResponder
   isTopRef.current = isTop;
 
@@ -41,33 +36,22 @@ function SwipeCardComponent({
   useEffect(() => {
     const prevValue = isTopRef.current;
     isTopRef.current = isTop;
-    console.log(
-      `✅ Card ${user.name} (${user.id}) - isTop updated: ${prevValue} -> ${isTop}`
-    );
 
     // Reset position when becoming top card
     if (isTop && !prevValue) {
-      console.log(
-        `🔄 Card ${user.name} (${user.id}) - Reset position (became top card)`
-      );
       position.setValue({ x: 0, y: 0 });
     }
   }, [isTop, user.name, user.id, position]);
 
   // Reset position when user changes (new card appears)
   useEffect(() => {
-    console.log(
-      `🔄 Card ${user.name} (${user.id}) - Position reset (user changed)`
-    );
     position.setValue({ x: 0, y: 0 });
   }, [user.id, position, user.name]);
 
   // Cleanup on unmount
   useEffect(() => {
-    console.log(`🟢 Card ${user.name} (${user.id}) - Mounted`);
     isMounted.current = true;
     return () => {
-      console.log(`🔴 Card ${user.name} (${user.id}) - Unmounted`);
       isMounted.current = false;
     };
   }, [user.name, user.id]);
@@ -104,26 +88,19 @@ function SwipeCardComponent({
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
         const shouldRespond = isTopRef.current;
-        console.log(
-          `${user.name} (${user.id}) - onStartShouldSetPanResponder, isTopRef.current:`,
-          shouldRespond
-        );
+
         return shouldRespond;
       },
       onPanResponderMove: (_, gesture) => {
         if (!isTopRef.current) {
-          console.log(`${user.name} - Ignoring move, not top card`);
           return;
         }
-        console.log(`${user.name} - Moving:`, gesture.dx, gesture.dy);
         position.setValue({ x: gesture.dx, y: gesture.dy });
       },
       onPanResponderRelease: (_, gesture) => {
         if (!isTopRef.current) {
-          console.log(`${user.name} - Ignoring release, not top card`);
           return;
         }
-        console.log(`${user.name} - Released at:`, gesture.dx);
         if (gesture.dx > SWIPE_THRESHOLD) {
           // Swipe right - Like
           forceSwipe("right");
@@ -166,9 +143,8 @@ function SwipeCardComponent({
       <ProfileCard
         name={user.name}
         age={user.age}
-        distance={user.distance}
+        distance={user.location}
         photoUrl={user.photos[0]}
-        verified={user.verified}
       />
 
       {/* Like label */}
@@ -231,14 +207,6 @@ function arePropsEqual(prevProps: SwipeCardProps, nextProps: SwipeCardProps) {
   // Re-render if user changes or isTop changes
   const userChanged = prevProps.user.id !== nextProps.user.id;
   const isTopChanged = prevProps.isTop !== nextProps.isTop;
-
-  console.log(`🔍 arePropsEqual for ${nextProps.user.name}:`, {
-    userChanged,
-    isTopChanged,
-    shouldUpdate: userChanged || isTopChanged,
-    prevIsTop: prevProps.isTop,
-    nextIsTop: nextProps.isTop,
-  });
 
   // Return true if props are equal (should NOT re-render)
   // Return false if props are different (should re-render)

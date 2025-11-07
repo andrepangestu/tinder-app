@@ -3,10 +3,8 @@ export interface User {
   id: string;
   name: string;
   age: number;
-  distance: number;
+  location: string;
   photos: string[];
-  bio?: string;
-  verified?: boolean;
 }
 
 // Match types
@@ -18,4 +16,4 @@ export interface Match {
 }
 
 // Swipe action types
-export type SwipeAction = "like" | "pass" | "superlike" | "rewind";
+export type SwipeAction = "like" | "pass" | "rewind";

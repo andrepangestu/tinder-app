@@ -1,69 +1,77 @@
 import { Logo } from "@/src/components/atoms/Logo";
 import { ActionButtons } from "@/src/components/molecules/ActionButtons";
 import { NoMoreCardsScreen, SwipeCard } from "@/src/components/organisms";
-import type { User } from "@/src/types";
-import { useCallback, useMemo, useState } from "react";
-import { StatusBar, StyleSheet, View } from "react-native";
+import { useInfiniteRecommendedPeople } from "@/src/hooks";
+import {
+  currentSwipeIndexState,
+  likedUsersState,
+  passedUsersState,
+  shouldLoadMoreSelector,
+  usersState,
+} from "@/src/state";
+import { useCallback, useEffect, useMemo } from "react";
+import {
+  ActivityIndicator,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
-// Mock data - replace with real API data later
-const MOCK_USERS: User[] = [
-  {
-    id: "1",
-    name: "Jessica",
-    age: 26,
-    distance: 8,
-    photos: ["https://picsum.photos/400/600?random=3"],
-    verified: true,
-    bio: "Foodie and photographer",
-  },
-  {
-    id: "2",
-    name: "에스더",
-    age: 30,
-    distance: 24,
-    photos: ["https://picsum.photos/400/600?random=1"],
-    verified: true,
-    bio: "Love traveling and coffee",
-  },
-  {
-    id: "3",
-    name: "Sarah",
-    age: 28,
-    distance: 15,
-    photos: ["https://picsum.photos/400/600?random=2"],
-    verified: false,
-    bio: "Yoga enthusiast",
-  },
-  {
-    id: "4",
-    name: "BANG",
-    age: 33,
-    distance: 22,
-    photos: ["https://picsum.photos/400/600?random=4"],
-    verified: true,
-    bio: "Foodie and MUKBANG",
-  },
-];
+export function MainSwipeTemplate() {
+  // Recoil state
+  const [currentIndex, setCurrentIndex] = useRecoilState(
+    currentSwipeIndexState
+  );
+  const [users, setUsers] = useRecoilState(usersState);
+  const setLikedUsers = useSetRecoilState(likedUsersState);
+  const setPassedUsers = useSetRecoilState(passedUsersState);
+  const shouldLoadMore = useRecoilValue(shouldLoadMoreSelector);
 
-interface MainSwipeTemplateProps {
-  users?: User[];
-}
+  // React Query - fetch data with infinite scroll
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useInfiniteRecommendedPeople(5);
 
-export function MainSwipeTemplate({
-  users = MOCK_USERS,
-}: MainSwipeTemplateProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Load initial data and update Recoil state
+  useEffect(() => {
+    if (data?.users && data.users.length > 0) {
+      setUsers(data.users);
+    }
+  }, [data, setUsers]);
+
+  // Auto-load more when approaching end
+  useEffect(() => {
+    if (shouldLoadMore && hasNextPage && !isFetchingNextPage) {
+      console.log("Auto-loading next page...");
+      fetchNextPage();
+    }
+  }, [shouldLoadMore, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSwipeLeft = useCallback(() => {
+    const currentUser = users[currentIndex];
+    console.log(
+      "Swiped left (Pass):",
+      currentUser?.name,
+      "currentIndex:",
+      currentIndex
+    );
+
+    // ✅ FIX: Update Recoil states OUTSIDE of state updater
+    if (currentUser) {
+      setPassedUsers((prev) => [...prev, currentUser]);
+    }
+
+    // Update index separately
     setCurrentIndex((prevIndex) => {
-      const currentUser = users[prevIndex];
-      console.log(
-        "Swiped left (Pass):",
-        currentUser?.name,
-        "prevIndex:",
-        prevIndex
-      );
       const nextIndex = prevIndex + 1;
 
       // Log when no more cards
@@ -73,17 +81,24 @@ export function MainSwipeTemplate({
 
       return nextIndex;
     });
-  }, [users]);
+  }, [users, currentIndex, setPassedUsers, setCurrentIndex]);
 
   const handleSwipeRight = useCallback(() => {
+    const currentUser = users[currentIndex];
+    console.log(
+      "Swiped right (Like):",
+      currentUser?.name,
+      "currentIndex:",
+      currentIndex
+    );
+
+    // ✅ FIX: Update Recoil states OUTSIDE of state updater
+    if (currentUser) {
+      setLikedUsers((prev) => [...prev, currentUser]);
+    }
+
+    // Update index separately
     setCurrentIndex((prevIndex) => {
-      const currentUser = users[prevIndex];
-      console.log(
-        "Swiped right (Like):",
-        currentUser?.name,
-        "prevIndex:",
-        prevIndex
-      );
       const nextIndex = prevIndex + 1;
 
       // Log when no more cards
@@ -93,18 +108,30 @@ export function MainSwipeTemplate({
 
       return nextIndex;
     });
-  }, [users]);
+  }, [users, currentIndex, setLikedUsers, setCurrentIndex]);
 
   const handleRewind = useCallback(() => {
-    setCurrentIndex((prevIndex) => {
-      if (prevIndex > 0) {
-        console.log("Rewinding from index:", prevIndex, "to:", prevIndex - 1);
-        return prevIndex - 1;
+    if (currentIndex > 0) {
+      console.log(
+        "Rewinding from index:",
+        currentIndex,
+        "to:",
+        currentIndex - 1
+      );
+
+      // ✅ FIX: Update Recoil states OUTSIDE of state updater
+      const previousUser = users[currentIndex - 1];
+      if (previousUser) {
+        setLikedUsers((prev) => prev.filter((u) => u.id !== previousUser.id));
+        setPassedUsers((prev) => prev.filter((u) => u.id !== previousUser.id));
       }
+
+      // Update index separately
+      setCurrentIndex((prevIndex) => prevIndex - 1);
+    } else {
       console.log("Already at first card, cannot rewind");
-      return prevIndex;
-    });
-  }, []);
+    }
+  }, [currentIndex, users, setLikedUsers, setPassedUsers, setCurrentIndex]);
 
   const handlePass = useCallback(() => {
     handleSwipeLeft();
@@ -116,7 +143,7 @@ export function MainSwipeTemplate({
 
   const handleRestart = useCallback(() => {
     setCurrentIndex(0);
-  }, []);
+  }, [setCurrentIndex]);
 
   const renderCards = useMemo(() => {
     if (currentIndex >= users.length) {
@@ -159,15 +186,40 @@ export function MainSwipeTemplate({
           );
         }
 
-        console.log(`  -> Not in range`);
         return null;
       })
       .filter(Boolean);
 
-    console.log("Total cards rendered:", cardsToRender.length);
-    console.log("=== RENDER CARDS END ===");
     return cardsToRender;
   }, [currentIndex, users, handleSwipeLeft, handleSwipeRight, handleRestart]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF6B6B" />
+          <Text style={styles.loadingText}>Loading profiles...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Error loading profiles</Text>
+          <Text style={styles.errorDetail}>
+            {error instanceof Error ? error.message : "Unknown error"}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -217,5 +269,28 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     paddingBottom: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 12,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FF6B6B",
+    marginBottom: 8,
+  },
+  errorDetail: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
 });

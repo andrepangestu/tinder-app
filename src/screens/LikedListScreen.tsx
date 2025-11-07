@@ -4,98 +4,12 @@ import React from "react";
 // 2. Import View, FlatList, Text, StyleSheet
 import { Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRecoilValue } from "recoil";
+import { likedUsersState } from "../state";
 
 // 3. Import komponen kartu profil
 import { ProfileCard } from "../components/atoms/ProfileCard";
-
-// Tipe data untuk user
-interface LikedUser {
-  id: string;
-  name: string;
-  age: number;
-  image: string;
-  distance: number;
-  verified?: boolean;
-}
-
-// 4. Buat array 'MOCK_DATA' untuk data tiruan
-const MOCK_DATA: LikedUser[] = [
-  {
-    id: "1",
-    name: "Andre",
-    age: 30,
-    image: "https://picsum.photos/200/300?random=1",
-    distance: 2,
-    verified: true,
-  },
-  {
-    id: "2",
-    name: "Sarah",
-    age: 28,
-    image: "https://picsum.photos/200/300?random=2",
-    distance: 5,
-  },
-  {
-    id: "3",
-    name: "Diana",
-    age: 26,
-    image: "https://picsum.photos/200/300?random=3",
-    distance: 3,
-    verified: true,
-  },
-  {
-    id: "4",
-    name: "Jessica",
-    age: 29,
-    image: "https://picsum.photos/200/300?random=4",
-    distance: 7,
-  },
-  {
-    id: "5",
-    name: "Michael",
-    age: 32,
-    image: "https://picsum.photos/200/300?random=5",
-    distance: 4,
-    verified: true,
-  },
-  {
-    id: "6",
-    name: "Emma",
-    age: 27,
-    image: "https://picsum.photos/200/300?random=6",
-    distance: 6,
-  },
-  {
-    id: "7",
-    name: "Olivia",
-    age: 25,
-    image: "https://picsum.photos/200/300?random=7",
-    distance: 8,
-  },
-  {
-    id: "8",
-    name: "Sophia",
-    age: 31,
-    image: "https://picsum.photos/200/300?random=8",
-    distance: 3,
-    verified: true,
-  },
-  {
-    id: "9",
-    name: "James",
-    age: 33,
-    image: "https://picsum.photos/200/300?random=9",
-    distance: 9,
-  },
-  {
-    id: "10",
-    name: "Isabella",
-    age: 24,
-    image: "https://picsum.photos/200/300?random=10",
-    distance: 5,
-    verified: true,
-  },
-];
+import type { User } from "../types";
 
 // Hitung ukuran kartu untuk grid 2 kolom
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -103,17 +17,19 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 kolom dengan padding
 
 // 5. Buat komponen LikedListScreen
 export default function LikedListScreen() {
+  // Get liked users from Recoil state
+  const likedUsers = useRecoilValue(likedUsersState);
+
   // Buat fungsi 'renderProfileCard' yang menerima { item }
-  const renderProfileCard = ({ item }: { item: LikedUser }) => {
+  const renderProfileCard = ({ item }: { item: User }) => {
     // Return ProfileCard dengan styling untuk grid
     return (
       <View style={styles.cardWrapper}>
         <ProfileCard
           name={item.name}
           age={item.age}
-          distance={item.distance}
-          photoUrl={item.image}
-          verified={item.verified}
+          distance={item.location}
+          photoUrl={item.photos[0] || "https://picsum.photos/200/300"}
           width={CARD_WIDTH}
           height={CARD_WIDTH * 1.4}
         />
@@ -128,16 +44,26 @@ export default function LikedListScreen() {
       {/* Tampilkan judul */}
       <Text style={styles.title}>Likes by User</Text>
 
-      {/* Render <FlatList> */}
-      <FlatList
-        data={MOCK_DATA}
-        renderItem={renderProfileCard}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {/* Empty state */}
+      {likedUsers.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No liked profiles yet</Text>
+          <Text style={styles.emptySubtext}>
+            Swipe right on profiles you like
+          </Text>
+        </View>
+      ) : (
+        /* Render <FlatList> */
+        <FlatList
+          data={likedUsers}
+          renderItem={renderProfileCard}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -172,5 +98,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });

@@ -10,9 +10,8 @@ const CARD_HEIGHT = CARD_WIDTH * 1.4;
 interface ProfileCardProps {
   name: string;
   age: number;
-  distance: number;
+  distance: string;
   photoUrl: string;
-  verified?: boolean;
   width?: number;
   height?: number;
 }
@@ -22,7 +21,6 @@ export function ProfileCard({
   age,
   distance,
   photoUrl,
-  verified,
   width,
   height,
 }: ProfileCardProps) {
@@ -51,12 +49,11 @@ export function ProfileCard({
           <ThemedText type="title" style={styles.age}>
             {age}
           </ThemedText>
-          {verified && <ThemedText style={styles.verified}>✓</ThemedText>}
         </View>
 
         <View style={styles.locationRow}>
           <ThemedText style={styles.distance}>
-            📍 {distance}km 거리에 있음
+            📍 {distance ?? "0 km"} away
           </ThemedText>
         </View>
       </View>

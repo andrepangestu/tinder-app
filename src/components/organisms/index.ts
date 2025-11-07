@@ -1,5 +1,6 @@
 // Organisms - Complex components
 export { NoMoreCardsScreen } from "./NoMoreCardsScreen";
-export { ParallaxScrollView } from "./ParallaxScrollView";
+export { default as OptimizedSwipeCards } from "./OptimizedSwipeCards";
+export { default as RecommendedPeopleList } from "./RecommendedPeopleList";
 export { SplashScreen } from "./SplashScreen";
 export { SwipeCard } from "./SwipeCard";

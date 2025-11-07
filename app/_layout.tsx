@@ -1,8 +1,24 @@
+import "react-native-gesture-handler";
+import "react-native-reanimated";
+
 import { SplashScreen } from "@/src/components/organisms";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
 import * as ExpoSplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { RecoilRoot } from "recoil";
+
+// Create a query client instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (React Query v5 uses gcTime instead of cacheTime)
+    },
+  },
+});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 ExpoSplashScreen.preventAutoHideAsync();
@@ -39,11 +55,15 @@ export default function RootLayout() {
   const showSplash = !appReady || !splashAnimationFinished;
 
   return (
-    <SafeAreaProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-      {showSplash && (
-        <SplashScreen onFinish={() => setSplashAnimationFinished(true)} />
-      )}
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <RecoilRoot>
+        <SafeAreaProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+          {showSplash && (
+            <SplashScreen onFinish={() => setSplashAnimationFinished(true)} />
+          )}
+        </SafeAreaProvider>
+      </RecoilRoot>
+    </QueryClientProvider>
   );
 }
