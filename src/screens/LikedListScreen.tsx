@@ -1,15 +1,9 @@
 // 1. Import React
 import React from "react";
 
-// 2. Import View, FlatList, Text, StyleSheet, SafeAreaView
-import {
-  Dimensions,
-  FlatList,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+// 2. Import View, FlatList, Text, StyleSheet
+import { Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // 3. Import komponen kartu profil
 import { ProfileCard } from "../components/atoms/ProfileCard";

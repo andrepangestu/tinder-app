@@ -2,6 +2,7 @@ import { SplashScreen } from "@/src/components/organisms";
 import { Stack, useRouter } from "expo-router";
 import * as ExpoSplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 ExpoSplashScreen.preventAutoHideAsync();
@@ -38,11 +39,11 @@ export default function RootLayout() {
   const showSplash = !appReady || !splashAnimationFinished;
 
   return (
-    <>
+    <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} />
       {showSplash && (
         <SplashScreen onFinish={() => setSplashAnimationFinished(true)} />
       )}
-    </>
+    </SafeAreaProvider>
   );
 }

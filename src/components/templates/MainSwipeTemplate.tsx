@@ -1,14 +1,24 @@
 import { Logo } from "@/src/components/atoms/Logo";
 import { ActionButtons } from "@/src/components/molecules/ActionButtons";
-import { SwipeCard } from "@/src/components/organisms/SwipeCard";
+import { NoMoreCardsScreen, SwipeCard } from "@/src/components/organisms";
 import type { User } from "@/src/types";
-import { useState } from "react";
-import { SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { StatusBar, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Mock data - replace with real API data later
 const MOCK_USERS: User[] = [
   {
     id: "1",
+    name: "Jessica",
+    age: 26,
+    distance: 8,
+    photos: ["https://picsum.photos/400/600?random=3"],
+    verified: true,
+    bio: "Foodie and photographer",
+  },
+  {
+    id: "2",
     name: "에스더",
     age: 30,
     distance: 24,
@@ -17,7 +27,7 @@ const MOCK_USERS: User[] = [
     bio: "Love traveling and coffee",
   },
   {
-    id: "2",
+    id: "3",
     name: "Sarah",
     age: 28,
     distance: 15,
@@ -26,13 +36,13 @@ const MOCK_USERS: User[] = [
     bio: "Yoga enthusiast",
   },
   {
-    id: "3",
-    name: "Jessica",
-    age: 26,
-    distance: 8,
-    photos: ["https://picsum.photos/400/600?random=3"],
+    id: "4",
+    name: "BANG",
+    age: 33,
+    distance: 22,
+    photos: ["https://picsum.photos/400/600?random=4"],
     verified: true,
-    bio: "Foodie and photographer",
+    bio: "Foodie and MUKBANG",
   },
 ];
 
@@ -44,63 +54,120 @@ export function MainSwipeTemplate({
   users = MOCK_USERS,
 }: MainSwipeTemplateProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const cards = users;
 
-  const handleSwipeLeft = () => {
-    console.log("Swiped left (Pass):", cards[currentIndex]?.name);
-    setCurrentIndex(currentIndex + 1);
-  };
-
-  const handleSwipeRight = () => {
-    console.log("Swiped right (Like):", cards[currentIndex]?.name);
-    setCurrentIndex(currentIndex + 1);
-  };
-
-  const handleRewind = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-
-  const handlePass = () => {
-    handleSwipeLeft();
-  };
-
-  const handleLike = () => {
-    handleSwipeRight();
-  };
-
-  const renderCards = () => {
-    if (currentIndex >= cards.length) {
-      return (
-        <View style={styles.noMoreCards}>
-          <Logo size={100} showText={false} textColor="#FF6B6B" />
-        </View>
+  const handleSwipeLeft = useCallback(() => {
+    setCurrentIndex((prevIndex) => {
+      const currentUser = users[prevIndex];
+      console.log(
+        "Swiped left (Pass):",
+        currentUser?.name,
+        "prevIndex:",
+        prevIndex
       );
+      const nextIndex = prevIndex + 1;
+
+      // Log when no more cards
+      if (nextIndex >= users.length) {
+        console.log("No more cards!");
+      }
+
+      return nextIndex;
+    });
+  }, [users]);
+
+  const handleSwipeRight = useCallback(() => {
+    setCurrentIndex((prevIndex) => {
+      const currentUser = users[prevIndex];
+      console.log(
+        "Swiped right (Like):",
+        currentUser?.name,
+        "prevIndex:",
+        prevIndex
+      );
+      const nextIndex = prevIndex + 1;
+
+      // Log when no more cards
+      if (nextIndex >= users.length) {
+        console.log("No more cards!");
+      }
+
+      return nextIndex;
+    });
+  }, [users]);
+
+  const handleRewind = useCallback(() => {
+    setCurrentIndex((prevIndex) => {
+      if (prevIndex > 0) {
+        console.log("Rewinding from index:", prevIndex, "to:", prevIndex - 1);
+        return prevIndex - 1;
+      }
+      console.log("Already at first card, cannot rewind");
+      return prevIndex;
+    });
+  }, []);
+
+  const handlePass = useCallback(() => {
+    handleSwipeLeft();
+  }, [handleSwipeLeft]);
+
+  const handleLike = useCallback(() => {
+    handleSwipeRight();
+  }, [handleSwipeRight]);
+
+  const handleRestart = useCallback(() => {
+    setCurrentIndex(0);
+  }, []);
+
+  const renderCards = useMemo(() => {
+    if (currentIndex >= users.length) {
+      console.log("Showing NoMoreCardsScreen");
+      return <NoMoreCardsScreen onRestart={handleRestart} />;
     }
 
-    return cards
+    const cardsToRender = users
       .map((user, index) => {
         if (index < currentIndex) {
           return null;
         }
 
+        // Render current card and next card (if exists)
         if (index === currentIndex || index === currentIndex + 1) {
+          const isTopCard = index === currentIndex;
+          // Calculate z-index: top card should have higher z-index
+          const zIndex = isTopCard ? 2 : 1;
+          // Only top card should receive touch events
+          const pointerEvents = isTopCard ? "auto" : "none";
+
           return (
-            <SwipeCard
+            <View
               key={user.id}
-              user={user}
-              onSwipeLeft={handleSwipeLeft}
-              onSwipeRight={handleSwipeRight}
-              isTop={index === currentIndex}
-            />
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                zIndex: zIndex,
+              }}
+              pointerEvents={pointerEvents}
+            >
+              <SwipeCard
+                user={user}
+                onSwipeLeft={handleSwipeLeft}
+                onSwipeRight={handleSwipeRight}
+                isTop={isTopCard}
+              />
+            </View>
           );
         }
 
+        console.log(`  -> Not in range`);
         return null;
       })
-      .reverse();
-  };
+      .filter(Boolean);
+
+    console.log("Total cards rendered:", cardsToRender.length);
+    console.log("=== RENDER CARDS END ===");
+    return cardsToRender;
+  }, [currentIndex, users, handleSwipeLeft, handleSwipeRight, handleRestart]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -112,7 +179,7 @@ export function MainSwipeTemplate({
       </View>
 
       {/* Card Stack */}
-      <View style={styles.cardContainer}>{renderCards()}</View>
+      <View style={styles.cardContainer}>{renderCards}</View>
 
       {/* Action Buttons */}
       <View style={styles.buttonsContainer}>
