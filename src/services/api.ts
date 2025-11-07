@@ -1,30 +1,32 @@
-import { Platform } from "react-native";
-
 // ========================================
 // API Configuration - Choose based on your setup
 // ========================================
 
-// OPTION 1: Auto-detect platform (RECOMMENDED)
+import { Platform } from "react-native";
+
+// PRODUCTION API Configuration - MUST use HTTPS (server redirects HTTP to HTTPS)
+const PRODUCTION_API = "https://andrepangestu.com/api";
+const USE_PRODUCTION = true; // Set false - server error 500!
+
 const getApiBaseUrl = () => {
-  // For Android Emulator
-  if (Platform.OS === "android") {
-    return "http://10.0.2.2:8000/api";
+  if (USE_PRODUCTION) {
+    return PRODUCTION_API;
   }
 
-  // For iOS Simulator / Web
+  // Local development - auto-detect platform
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:8000/api"; // Android Emulator
+  }
+
+  // iOS Simulator / Web
   return "http://127.0.0.1:8000/api";
 };
-
-// OPTION 2: Use specific IP for physical device
-// Uncomment dan ganti dengan IP komputer Anda
-// const getApiBaseUrl = () => "http://192.168.1.100:8000/api"; // Ganti dengan IP Anda
-
-// OPTION 3: Production API
-// const getApiBaseUrl = () => "https://your-production-api.com/api";
 
 const API_BASE_URL = getApiBaseUrl();
 
 console.log("🌐 API Base URL:", API_BASE_URL);
+console.log("🔧 Mode:", USE_PRODUCTION ? "PRODUCTION" : "LOCAL DEVELOPMENT");
+console.log("📱 Platform:", Platform.OS);
 
 export interface ApiPerson {
   id: number;
@@ -83,27 +85,40 @@ export async function fetchRecommendedPeople(
   perPage: number = 5,
   signal?: AbortSignal // Support untuk cancellation dari React Query
 ): Promise<PaginatedResponse<ApiPerson>> {
+  // Create AbortController for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
   try {
-    const url = new URL(`${API_BASE_URL}/people/recommended`);
+    const baseUrl = getApiBaseUrl();
+    const url = new URL(`${baseUrl}/people/recommended`);
     url.searchParams.set("per_page", String(perPage));
     url.searchParams.set("page", String(page));
 
+    console.log("🔄 Fetching recommended people:", url.toString());
+
     const response = await fetch(url.toString(), {
-      signal, // Gunakan signal dari React Query untuk auto-cancellation
+      method: "GET",
+      signal: signal || controller.signal,
       headers: {
+        Accept: "application/json",
         "Content-Type": "application/json",
-        // Tambahkan cache headers untuk optimasi
-        "Cache-Control": "no-cache",
+        "User-Agent": "TinderApp/1.0",
       },
-      // Untuk production, bisa enable credentials jika perlu auth
-      // credentials: "include",
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
+      console.error("❌ HTTP Error:", response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const apiResponse: LaravelApiResponse = await response.json();
+    console.log(
+      "✅ API Response received, people count:",
+      apiResponse.data?.people?.length
+    );
 
     // Validate response structure
     if (
@@ -111,6 +126,7 @@ export async function fetchRecommendedPeople(
       !apiResponse.data ||
       !Array.isArray(apiResponse.data.people)
     ) {
+      console.error("❌ Invalid response structure:", apiResponse);
       throw new Error("Invalid response format from API");
     }
 
@@ -137,14 +153,38 @@ export async function fetchRecommendedPeople(
 
     return transformedData;
   } catch (error) {
+    clearTimeout(timeoutId);
+
     // Jangan fallback ke mock data di production
     // Hanya log error dan throw ulang untuk ditangani React Query
     if (error instanceof Error && error.name === "AbortError") {
       // Request dibatalkan, ini normal behavior
+      console.warn("⏱️ Request timeout atau cancelled");
       throw error;
     }
 
-    console.error("Error fetching recommended people:", error);
+    console.error("❌ Error fetching recommended people:", error);
+
+    // More detailed error logging
+    if (
+      error instanceof TypeError &&
+      error.message === "Network request failed"
+    ) {
+      console.error("💡 Network Error - Possible causes:");
+      console.error("  1. Device tidak ada internet connection");
+      console.error("  2. HTTPS certificate tidak di-trust oleh Android");
+      console.error("  3. Server CORS tidak allow mobile app");
+      console.error("  4. Firewall/VPN blocking request");
+      console.error("📱 Current API URL:", getApiBaseUrl());
+      console.error(
+        "💻 Try accessing this URL from device browser to test connectivity"
+      );
+      console.error("🔧 Debug: Open browser on device and visit:");
+      console.error(
+        `   ${getApiBaseUrl()}/people/recommended?per_page=5&page=1`
+      );
+    }
+
     throw error; // Let React Query handle retry logic
   }
 }

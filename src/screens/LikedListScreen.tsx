@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   StyleSheet,
   Text,
   View,
@@ -52,6 +54,12 @@ export default function LikedListScreen() {
     );
   }, []);
 
+  // Key extractor with fallback to index for unique keys
+  const keyExtractor = useCallback(
+    (item: User, index: number) => `liked-${item.id}-${index}`,
+    []
+  );
+
   // Handle load more
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -59,23 +67,52 @@ export default function LikedListScreen() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Handle scroll - detect when user reaches bottom
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { layoutMeasurement, contentOffset, contentSize } =
+        event.nativeEvent;
+
+      // Calculate how close we are to the bottom
+      const paddingToBottom = 20; // Trigger when 20px from bottom
+      const isCloseToBottom =
+        layoutMeasurement.height + contentOffset.y >=
+        contentSize.height - paddingToBottom;
+
+      if (isCloseToBottom && hasNextPage && !isFetchingNextPage) {
+        console.log("🎯 Loading next page from scroll");
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
+
   // Render footer (loading indicator for load more)
   const renderFooter = useCallback(() => {
+    if (!isFetchingNextPage && !hasNextPage) {
+      // Show "no more" indicator
+      return (
+        <View style={styles.footerLoader}>
+          <Text style={styles.noMoreText}>No more profiles</Text>
+        </View>
+      );
+    }
+
     if (!isFetchingNextPage) return null;
 
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#FF6B6B" />
+        <ActivityIndicator size="large" color="#FF6B6B" />
         <Text style={styles.footerText}>Loading more...</Text>
       </View>
     );
-  }, [isFetchingNextPage]);
+  }, [isFetchingNextPage, hasNextPage]);
 
   // Loading state
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Likes by User</Text>
+        <Text style={styles.title}>Liked Profiles</Text>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FF6B6B" />
           <Text style={styles.loadingText}>Loading liked profiles...</Text>
@@ -88,7 +125,7 @@ export default function LikedListScreen() {
   if (isError) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Likes by User</Text>
+        <Text style={styles.title}>Liked Profiles</Text>
         <View style={styles.emptyContainer}>
           <Text style={styles.errorText}>Failed to load liked profiles</Text>
           <Text style={styles.errorDetail}>
@@ -110,7 +147,7 @@ export default function LikedListScreen() {
     <SafeAreaView style={styles.container}>
       {/* Tampilkan judul */}
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Likes by User</Text>
+        <Text style={styles.title}>Liked Profiles</Text>
         {data?.totalUsers !== undefined && (
           <Text style={styles.countText}>
             {data.totalUsers} {data.totalUsers === 1 ? "person" : "people"}
@@ -131,17 +168,25 @@ export default function LikedListScreen() {
         <FlatList
           data={likedUsers}
           renderItem={renderProfileCard}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          // Scroll-based load more (more reliable than onEndReached)
+          onScroll={handleScroll}
+          scrollEventThrottle={16} // Fire scroll events every 16ms
+          // Fallback to onEndReached
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.1} // Very sensitive threshold
           ListFooterComponent={renderFooter}
           // Pull to refresh
           onRefresh={refetch}
-          refreshing={isLoading}
+          refreshing={isLoading && likedUsers.length === 0}
+          // Performance optimization
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
         />
       )}
     </SafeAreaView>
@@ -245,5 +290,10 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     color: "#666",
+  },
+  noMoreText: {
+    fontSize: 14,
+    color: "#999",
+    fontStyle: "italic",
   },
 });

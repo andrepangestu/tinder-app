@@ -8,27 +8,21 @@ interface NoMoreCardsScreenProps {
 export function NoMoreCardsScreen({ onRestart }: NoMoreCardsScreenProps) {
   return (
     <View style={styles.container}>
-      {/* Logo */}
       <Logo size={120} showText={false} textColor="#FF6B6B" />
 
-      {/* Title */}
-      <Text style={styles.title}>Tidak Ada Lagi</Text>
+      <Text style={styles.title}>All Profiles Viewed</Text>
 
-      {/* Subtitle */}
-      <Text style={styles.subtitle}>
-        Anda sudah melihat semua profil yang tersedia
-      </Text>
+      <Text style={styles.subtitle}>You have seen all available profiles</Text>
 
       {/* Info Text */}
       <Text style={styles.infoText}>
-        Periksa kembali nanti untuk profil baru, atau ubah preferensi pencarian
-        Anda
+        Check back later for new profiles, or change your search preferences
       </Text>
 
       {/* Restart Button (optional) */}
       {onRestart && (
         <TouchableOpacity style={styles.button} onPress={onRestart}>
-          <Text style={styles.buttonText}>🔄 Lihat Lagi</Text>
+          <Text style={styles.buttonText}>🔄 View Again</Text>
         </TouchableOpacity>
       )}
     </View>

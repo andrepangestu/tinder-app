@@ -1,4 +1,3 @@
-import { Logo } from "@/src/components/atoms/Logo";
 import { ActionButtons } from "@/src/components/molecules/ActionButtons";
 import { NoMoreCardsScreen, SwipeCard } from "@/src/components/organisms";
 import { useInfiniteRecommendedPeople } from "@/src/hooks";
@@ -20,6 +19,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { LogoHeader } from "../atoms/LogoHeader";
 
 export function MainSwipeTemplate() {
   // Recoil state
@@ -238,10 +238,7 @@ export function MainSwipeTemplate() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header with Logo */}
-      <View style={styles.header}>
-        <Logo size={40} showText={false} textColor="#FF6B6B" />
-      </View>
+      <LogoHeader size={100} />
 
       {/* Card Stack */}
       <View style={styles.cardContainer}>{renderCards}</View>
@@ -263,13 +260,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  header: {
-    paddingVertical: 10,
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-  },
+
   cardContainer: {
     flex: 1,
     justifyContent: "center",
