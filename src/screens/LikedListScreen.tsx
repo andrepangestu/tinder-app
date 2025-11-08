@@ -1,10 +1,11 @@
 // 1. Import React
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 // 2. Import View, FlatList, Text, StyleSheet
 import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   FlatList,
   NativeScrollEvent,
@@ -23,6 +24,54 @@ import type { User } from "../types";
 // Hitung ukuran kartu untuk grid 2 kolom
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 kolom dengan padding
+
+// Shimmer Card Component
+const ShimmerCard = () => {
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const shimmerAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    shimmerAnimation.start();
+    return () => shimmerAnimation.stop();
+  }, [shimmerAnim]);
+
+  const opacity = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.7],
+  });
+
+  return (
+    <View style={styles.cardWrapper}>
+      <View style={styles.shimmerCard}>
+        <Animated.View
+          style={[
+            styles.shimmerImage,
+            {
+              opacity,
+            },
+          ]}
+        />
+        <View style={styles.shimmerContent}>
+          <Animated.View style={[styles.shimmerTitle, { opacity }]} />
+          <Animated.View style={[styles.shimmerSubtitle, { opacity }]} />
+        </View>
+      </View>
+    </View>
+  );
+};
 
 // 5. Buat komponen LikedListScreen
 export default function LikedListScreen() {
@@ -109,10 +158,13 @@ export default function LikedListScreen() {
 
     if (!isFetchingNextPage) return null;
 
+    // Show shimmer cards when loading more
     return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="large" color="#FF6B6B" />
-        <Text style={styles.footerText}>Loading more...</Text>
+      <View style={styles.shimmerContainer}>
+        <View style={styles.shimmerRow}>
+          <ShimmerCard />
+          <ShimmerCard />
+        </View>
       </View>
     );
   }, [isFetchingNextPage, hasNextPage]);
@@ -304,5 +356,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     fontStyle: "italic",
+  },
+  // Shimmer styles
+  shimmerContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  shimmerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  shimmerCard: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+    backgroundColor: "#F0F0F0",
+    overflow: "hidden",
+  },
+  shimmerImage: {
+    width: "100%",
+    height: "75%",
+    backgroundColor: "#E0E0E0",
+  },
+  shimmerContent: {
+    padding: 12,
+    gap: 8,
+  },
+  shimmerTitle: {
+    height: 16,
+    width: "70%",
+    backgroundColor: "#E0E0E0",
+    borderRadius: 4,
+  },
+  shimmerSubtitle: {
+    height: 12,
+    width: "50%",
+    backgroundColor: "#E0E0E0",
+    borderRadius: 4,
   },
 });

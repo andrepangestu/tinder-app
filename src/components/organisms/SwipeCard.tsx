@@ -1,6 +1,6 @@
 import { ProfileCard } from "@/src/components/atoms/ProfileCard";
 import type { User } from "@/src/types";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useImperativeHandle, useRef } from "react";
 import { Animated, Dimensions, PanResponder, StyleSheet } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -13,12 +13,15 @@ interface SwipeCardProps {
   isTop: boolean;
 }
 
-function SwipeCardComponent({
-  user,
-  onSwipeLeft,
-  onSwipeRight,
-  isTop,
-}: SwipeCardProps) {
+export interface SwipeCardRef {
+  swipeLeft: () => void;
+  swipeRight: () => void;
+}
+
+function SwipeCardComponent(
+  { user, onSwipeLeft, onSwipeRight, isTop }: SwipeCardProps,
+  ref: React.Ref<SwipeCardRef>
+) {
   const position = useRef(new Animated.ValueXY()).current;
   const isMounted = useRef(true);
   const isTopRef = useRef(isTop);
@@ -55,6 +58,12 @@ function SwipeCardComponent({
       isMounted.current = false;
     };
   }, [user.name, user.id]);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    swipeLeft: () => forceSwipe("left"),
+    swipeRight: () => forceSwipe("right"),
+  }));
 
   const forceSwipe = (direction: "left" | "right") => {
     const x = direction === "right" ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
@@ -213,5 +222,8 @@ function arePropsEqual(prevProps: SwipeCardProps, nextProps: SwipeCardProps) {
   return !userChanged && !isTopChanged;
 }
 
-// Export with React.memo using custom comparison
-export const SwipeCard = React.memo(SwipeCardComponent, arePropsEqual);
+// Export with React.memo and forwardRef
+export const SwipeCard = React.memo(
+  React.forwardRef<SwipeCardRef, SwipeCardProps>(SwipeCardComponent),
+  arePropsEqual
+);

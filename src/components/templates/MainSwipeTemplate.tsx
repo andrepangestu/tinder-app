@@ -1,5 +1,6 @@
 import { ActionButtons } from "@/src/components/molecules/ActionButtons";
 import { NoMoreCardsScreen, SwipeCard } from "@/src/components/organisms";
+import type { SwipeCardRef } from "@/src/components/organisms/SwipeCard";
 import { useInfiniteRecommendedPeople } from "@/src/hooks";
 import { dislikePerson, likePerson } from "@/src/services/api";
 import {
@@ -33,6 +34,9 @@ export function MainSwipeTemplate() {
 
   // Ref to track current index for immediate access (avoid stale closure)
   const currentIndexRef = useRef(currentIndex);
+  
+  // Ref to current card for button animations
+  const swipeCardRef = useRef<SwipeCardRef>(null);
 
   // Sync ref with state
   useEffect(() => {
@@ -165,11 +169,23 @@ export function MainSwipeTemplate() {
   }, [currentIndex, users, setLikedUsers, setPassedUsers, setCurrentIndex]);
 
   const handlePass = useCallback(() => {
-    handleSwipeLeft();
+    // Trigger swipe animation via ref
+    if (swipeCardRef.current) {
+      swipeCardRef.current.swipeLeft();
+    } else {
+      // Fallback if ref not available
+      handleSwipeLeft();
+    }
   }, [handleSwipeLeft]);
 
   const handleLike = useCallback(() => {
-    handleSwipeRight();
+    // Trigger swipe animation via ref
+    if (swipeCardRef.current) {
+      swipeCardRef.current.swipeRight();
+    } else {
+      // Fallback if ref not available
+      handleSwipeRight();
+    }
   }, [handleSwipeRight]);
 
   const handleRestart = useCallback(() => {
@@ -208,6 +224,7 @@ export function MainSwipeTemplate() {
               pointerEvents={pointerEvents}
             >
               <SwipeCard
+                ref={isTopCard ? swipeCardRef : null}
                 user={user}
                 onSwipeLeft={handleSwipeLeft}
                 onSwipeRight={handleSwipeRight}
