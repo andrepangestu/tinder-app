@@ -34,7 +34,7 @@ export function MainSwipeTemplate() {
 
   // Ref to track current index for immediate access (avoid stale closure)
   const currentIndexRef = useRef(currentIndex);
-  
+
   // Ref to current card for button animations
   const swipeCardRef = useRef<SwipeCardRef>(null);
 
