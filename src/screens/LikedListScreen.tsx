@@ -2,6 +2,7 @@
 import React, { useCallback } from "react";
 
 // 2. Import View, FlatList, Text, StyleSheet
+import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Dimensions,
@@ -36,6 +37,14 @@ export default function LikedListScreen() {
     isFetchingNextPage,
     refetch,
   } = useInfiniteLikedPeople(10); // 10 items per page
+
+  // Refetch data when screen is focused (tab pressed)
+  useFocusEffect(
+    useCallback(() => {
+      console.log("🔄 Liked screen focused - refetching data");
+      refetch();
+    }, [refetch])
+  );
 
   // Buat fungsi 'renderProfileCard' yang menerima { item }
   const renderProfileCard = useCallback(({ item }: { item: User }) => {

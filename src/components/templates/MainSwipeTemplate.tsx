@@ -9,7 +9,7 @@ import {
   shouldLoadMoreSelector,
   usersState,
 } from "@/src/state";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ActivityIndicator,
   StatusBar,
@@ -30,6 +30,14 @@ export function MainSwipeTemplate() {
   const setLikedUsers = useSetRecoilState(likedUsersState);
   const setPassedUsers = useSetRecoilState(passedUsersState);
   const shouldLoadMore = useRecoilValue(shouldLoadMoreSelector);
+
+  // Ref to track current index for immediate access (avoid stale closure)
+  const currentIndexRef = useRef(currentIndex);
+
+  // Sync ref with state
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   // React Query - fetch data with infinite scroll
   const {
@@ -58,15 +66,20 @@ export function MainSwipeTemplate() {
   }, [shouldLoadMore, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSwipeLeft = useCallback(() => {
-    const currentUser = users[currentIndex];
+    // ✅ FIX: Use ref to get the latest index (avoid stale closure)
+    const idx = currentIndexRef.current;
+    const currentUser = users[idx];
+
     console.log(
       "Swiped left (Pass):",
       currentUser?.name,
+      "ID:",
+      currentUser?.id,
       "currentIndex:",
-      currentIndex
+      idx
     );
 
-    // ✅ FIX: Update Recoil states OUTSIDE of state updater
+    // Update passed users (pure state update)
     if (currentUser) {
       setPassedUsers((prev) => [...prev, currentUser]);
 
@@ -77,7 +90,7 @@ export function MainSwipeTemplate() {
       });
     }
 
-    // Update index separately
+    // Update index separately (pure function)
     setCurrentIndex((prevIndex) => {
       const nextIndex = prevIndex + 1;
 
@@ -88,18 +101,23 @@ export function MainSwipeTemplate() {
 
       return nextIndex;
     });
-  }, [users, currentIndex, setPassedUsers, setCurrentIndex]);
+  }, [users, setPassedUsers, setCurrentIndex]);
 
   const handleSwipeRight = useCallback(() => {
-    const currentUser = users[currentIndex];
+    // ✅ FIX: Use ref to get the latest index (avoid stale closure)
+    const idx = currentIndexRef.current;
+    const currentUser = users[idx];
+
     console.log(
       "Swiped right (Like):",
       currentUser?.name,
+      "ID:",
+      currentUser?.id,
       "currentIndex:",
-      currentIndex
+      idx
     );
 
-    // ✅ FIX: Update Recoil states OUTSIDE of state updater
+    // Update liked users (pure state update)
     if (currentUser) {
       setLikedUsers((prev) => [...prev, currentUser]);
 
@@ -110,7 +128,7 @@ export function MainSwipeTemplate() {
       });
     }
 
-    // Update index separately
+    // Update index separately (pure function)
     setCurrentIndex((prevIndex) => {
       const nextIndex = prevIndex + 1;
 
@@ -121,7 +139,7 @@ export function MainSwipeTemplate() {
 
       return nextIndex;
     });
-  }, [users, currentIndex, setLikedUsers, setCurrentIndex]);
+  }, [users, setLikedUsers, setCurrentIndex]);
 
   const handleRewind = useCallback(() => {
     if (currentIndex > 0) {

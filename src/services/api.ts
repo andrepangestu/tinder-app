@@ -4,9 +4,9 @@
 
 import { Platform } from "react-native";
 
-// PRODUCTION API Configuration - MUST use HTTPS (server redirects HTTP to HTTPS)
+// PRODUCTION API Configuration
 const PRODUCTION_API = "https://andrepangestu.com/api";
-const USE_PRODUCTION = true; // Set false - server error 500!
+const USE_PRODUCTION = true;
 
 const getApiBaseUrl = () => {
   if (USE_PRODUCTION) {
@@ -170,15 +170,7 @@ export async function fetchRecommendedPeople(
       error instanceof TypeError &&
       error.message === "Network request failed"
     ) {
-      console.error("💡 Network Error - Possible causes:");
-      console.error("  1. Device tidak ada internet connection");
-      console.error("  2. HTTPS certificate tidak di-trust oleh Android");
-      console.error("  3. Server CORS tidak allow mobile app");
-      console.error("  4. Firewall/VPN blocking request");
       console.error("📱 Current API URL:", getApiBaseUrl());
-      console.error(
-        "💻 Try accessing this URL from device browser to test connectivity"
-      );
       console.error("🔧 Debug: Open browser on device and visit:");
       console.error(
         `   ${getApiBaseUrl()}/people/recommended?per_page=5&page=1`
