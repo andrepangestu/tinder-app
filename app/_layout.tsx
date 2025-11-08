@@ -29,7 +29,6 @@ export default function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate loading assets/fonts/etc
     async function prepare() {
       try {
         // Load fonts, assets, etc here
@@ -47,7 +46,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (appReady && splashAnimationFinished) {
       ExpoSplashScreen.hideAsync();
-      // Navigate to home screen after splash
+
       router.replace("/(tabs)");
     }
   }, [appReady, splashAnimationFinished, router]);

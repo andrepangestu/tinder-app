@@ -44,9 +44,10 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   appName: {
-    marginTop: 16,
-    fontSize: 48,
+    marginTop: 24,
+    fontSize: 42,
     fontWeight: "bold",
     letterSpacing: 2,
+    paddingTop: 8,
   },
 });

@@ -89,9 +89,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "visible",
   },
   logoContainer: {
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 80,
+    paddingHorizontal: 40,
+    overflow: "visible",
   },
 });
