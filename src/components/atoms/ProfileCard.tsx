@@ -34,13 +34,11 @@ export function ProfileCard({
         contentFit="cover"
       />
 
-      {/* Gradient overlay for text readability */}
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.8)"]}
         style={styles.gradient}
       />
 
-      {/* User info at bottom */}
       <View style={styles.infoContainer}>
         <View style={styles.nameRow}>
           <ThemedText type="title" style={styles.name}>
@@ -99,13 +97,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   name: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#fff",
     marginRight: 8,
   },
   age: {
-    fontSize: 28,
+    fontSize: 25,
     fontWeight: "400",
     color: "#fff",
     marginRight: 8,

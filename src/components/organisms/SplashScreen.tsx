@@ -15,9 +15,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Sequence of animations
     Animated.sequence([
-      // Logo appears with scale and fade
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -31,15 +29,12 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           useNativeDriver: true,
         }),
       ]),
-      // Small rotation for emphasis
       Animated.timing(rotateAnim, {
         toValue: 1,
         duration: 400,
         useNativeDriver: true,
       }),
-      // Wait a bit
       Animated.delay(600),
-      // Fade out
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 400,

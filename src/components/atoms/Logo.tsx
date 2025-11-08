@@ -15,7 +15,6 @@ export function Logo({
 }: LogoProps) {
   return (
     <View style={styles.container}>
-      {/* Tinder logo from assets */}
       <View style={[styles.logoContainer, { width: size, height: size }]}>
         <Image
           source={require("@/assets/images/tinder-logo.png")}
