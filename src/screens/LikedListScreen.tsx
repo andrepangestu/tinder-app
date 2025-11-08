@@ -1,8 +1,5 @@
-// 1. Import React
-import React, { useCallback, useEffect, useRef } from "react";
-
-// 2. Import View, FlatList, Text, StyleSheet
 import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -15,17 +12,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useInfiniteLikedPeople } from "../hooks";
-
-// 3. Import komponen kartu profil
 import { ProfileCard } from "../components/atoms/ProfileCard";
+import { useInfiniteLikedPeople } from "../hooks";
 import type { User } from "../types";
 
-// Hitung ukuran kartu untuk grid 2 kolom
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 kolom dengan padding
+const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
-// Shimmer Card Component
 const ShimmerCard = () => {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
@@ -75,7 +68,6 @@ const ShimmerCard = () => {
 
 // 5. Buat komponen LikedListScreen
 export default function LikedListScreen() {
-  // Fetch liked users from API with infinite scroll
   const {
     data,
     isLoading,
@@ -85,9 +77,8 @@ export default function LikedListScreen() {
     hasNextPage,
     isFetchingNextPage,
     refetch,
-  } = useInfiniteLikedPeople(10); // 10 items per page
+  } = useInfiniteLikedPeople(10);
 
-  // Refetch data when screen is focused (tab pressed)
   useFocusEffect(
     useCallback(() => {
       console.log("🔄 Liked screen focused - refetching data");
@@ -95,9 +86,7 @@ export default function LikedListScreen() {
     }, [refetch])
   );
 
-  // Buat fungsi 'renderProfileCard' yang menerima { item }
   const renderProfileCard = useCallback(({ item }: { item: User }) => {
-    // Return ProfileCard dengan styling untuk grid
     return (
       <View style={styles.cardWrapper}>
         <ProfileCard
@@ -112,27 +101,23 @@ export default function LikedListScreen() {
     );
   }, []);
 
-  // Key extractor with fallback to index for unique keys
   const keyExtractor = useCallback(
     (item: User, index: number) => `liked-${item.id}-${index}`,
     []
   );
 
-  // Handle load more
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Handle scroll - detect when user reaches bottom
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { layoutMeasurement, contentOffset, contentSize } =
         event.nativeEvent;
 
-      // Calculate how close we are to the bottom
-      const paddingToBottom = 20; // Trigger when 20px from bottom
+      const paddingToBottom = 20;
       const isCloseToBottom =
         layoutMeasurement.height + contentOffset.y >=
         contentSize.height - paddingToBottom;
@@ -145,10 +130,8 @@ export default function LikedListScreen() {
     [hasNextPage, isFetchingNextPage, fetchNextPage]
   );
 
-  // Render footer (loading indicator for load more)
   const renderFooter = useCallback(() => {
     if (!isFetchingNextPage && !hasNextPage) {
-      // Show "no more" indicator
       return (
         <View style={styles.footerLoader}>
           <Text style={styles.noMoreText}>No more profiles</Text>
@@ -158,7 +141,6 @@ export default function LikedListScreen() {
 
     if (!isFetchingNextPage) return null;
 
-    // Show shimmer cards when loading more
     return (
       <View style={styles.shimmerContainer}>
         <View style={styles.shimmerRow}>
@@ -169,7 +151,6 @@ export default function LikedListScreen() {
     );
   }, [isFetchingNextPage, hasNextPage]);
 
-  // Loading state
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -182,7 +163,6 @@ export default function LikedListScreen() {
     );
   }
 
-  // Error state
   if (isError) {
     return (
       <SafeAreaView style={styles.container}>
@@ -202,11 +182,8 @@ export default function LikedListScreen() {
 
   const likedUsers = data?.users || [];
 
-  // Di dalam return utama:
   return (
-    // Gunakan <SafeAreaView> sebagai pembungkus utama
     <SafeAreaView style={styles.container}>
-      {/* Tampilkan judul */}
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Liked Profiles</Text>
         {data?.totalUsers !== undefined && (
@@ -216,7 +193,6 @@ export default function LikedListScreen() {
         )}
       </View>
 
-      {/* Empty state */}
       {likedUsers.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No liked profiles yet</Text>
@@ -225,7 +201,6 @@ export default function LikedListScreen() {
           </Text>
         </View>
       ) : (
-        /* Render <FlatList> with load more */
         <FlatList
           data={likedUsers}
           renderItem={renderProfileCard}
@@ -234,17 +209,13 @@ export default function LikedListScreen() {
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          // Scroll-based load more (more reliable than onEndReached)
           onScroll={handleScroll}
-          scrollEventThrottle={16} // Fire scroll events every 16ms
-          // Fallback to onEndReached
+          scrollEventThrottle={16}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.1} // Very sensitive threshold
+          onEndReachedThreshold={0.1}
           ListFooterComponent={renderFooter}
-          // Pull to refresh
           onRefresh={refetch}
           refreshing={isLoading && likedUsers.length === 0}
-          // Performance optimization
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={5}
@@ -254,7 +225,6 @@ export default function LikedListScreen() {
   );
 }
 
-// 6. Buat StyleSheet di bawah komponen
 const styles = StyleSheet.create({
   container: {
     flex: 1,

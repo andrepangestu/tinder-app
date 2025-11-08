@@ -38,12 +38,10 @@ export function MainSwipeTemplate() {
   // Ref to current card for button animations
   const swipeCardRef = useRef<SwipeCardRef>(null);
 
-  // Sync ref with state
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // React Query - fetch data with infinite scroll
   const {
     data,
     fetchNextPage,
@@ -54,14 +52,12 @@ export function MainSwipeTemplate() {
     error,
   } = useInfiniteRecommendedPeople(5);
 
-  // Load initial data and update Recoil state
   useEffect(() => {
     if (data?.users && data.users.length > 0) {
       setUsers(data.users);
     }
   }, [data, setUsers]);
 
-  // Auto-load more when approaching end
   useEffect(() => {
     if (shouldLoadMore && hasNextPage && !isFetchingNextPage) {
       console.log("Auto-loading next page...");
@@ -70,7 +66,6 @@ export function MainSwipeTemplate() {
   }, [shouldLoadMore, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSwipeLeft = useCallback(() => {
-    // ✅ FIX: Use ref to get the latest index (avoid stale closure)
     const idx = currentIndexRef.current;
     const currentUser = users[idx];
 
@@ -83,22 +78,17 @@ export function MainSwipeTemplate() {
       idx
     );
 
-    // Update passed users (pure state update)
     if (currentUser) {
       setPassedUsers((prev) => [...prev, currentUser]);
 
-      // 📡 Send dislike to API (fire and forget, non-blocking)
       dislikePerson(Number(currentUser.id)).catch((error) => {
         console.error("Failed to send dislike:", error);
-        // Silently fail - user experience not affected
       });
     }
 
-    // Update index separately (pure function)
     setCurrentIndex((prevIndex) => {
       const nextIndex = prevIndex + 1;
 
-      // Log when no more cards
       if (nextIndex >= users.length) {
         console.log("No more cards!");
       }
@@ -108,7 +98,6 @@ export function MainSwipeTemplate() {
   }, [users, setPassedUsers, setCurrentIndex]);
 
   const handleSwipeRight = useCallback(() => {
-    // ✅ FIX: Use ref to get the latest index (avoid stale closure)
     const idx = currentIndexRef.current;
     const currentUser = users[idx];
 
@@ -121,7 +110,6 @@ export function MainSwipeTemplate() {
       idx
     );
 
-    // Update liked users (pure state update)
     if (currentUser) {
       setLikedUsers((prev) => [...prev, currentUser]);
 
@@ -132,11 +120,9 @@ export function MainSwipeTemplate() {
       });
     }
 
-    // Update index separately (pure function)
     setCurrentIndex((prevIndex) => {
       const nextIndex = prevIndex + 1;
 
-      // Log when no more cards
       if (nextIndex >= users.length) {
         console.log("No more cards!");
       }
@@ -154,14 +140,12 @@ export function MainSwipeTemplate() {
         currentIndex - 1
       );
 
-      // ✅ FIX: Update Recoil states OUTSIDE of state updater
       const previousUser = users[currentIndex - 1];
       if (previousUser) {
         setLikedUsers((prev) => prev.filter((u) => u.id !== previousUser.id));
         setPassedUsers((prev) => prev.filter((u) => u.id !== previousUser.id));
       }
 
-      // Update index separately
       setCurrentIndex((prevIndex) => prevIndex - 1);
     } else {
       console.log("Already at first card, cannot rewind");
@@ -169,21 +153,17 @@ export function MainSwipeTemplate() {
   }, [currentIndex, users, setLikedUsers, setPassedUsers, setCurrentIndex]);
 
   const handlePass = useCallback(() => {
-    // Trigger swipe animation via ref
     if (swipeCardRef.current) {
       swipeCardRef.current.swipeLeft();
     } else {
-      // Fallback if ref not available
       handleSwipeLeft();
     }
   }, [handleSwipeLeft]);
 
   const handleLike = useCallback(() => {
-    // Trigger swipe animation via ref
     if (swipeCardRef.current) {
       swipeCardRef.current.swipeRight();
     } else {
-      // Fallback if ref not available
       handleSwipeRight();
     }
   }, [handleSwipeRight]);
@@ -204,12 +184,9 @@ export function MainSwipeTemplate() {
           return null;
         }
 
-        // Render current card and next card (if exists)
         if (index === currentIndex || index === currentIndex + 1) {
           const isTopCard = index === currentIndex;
-          // Calculate z-index: top card should have higher z-index
           const zIndex = isTopCard ? 2 : 1;
-          // Only top card should receive touch events
           const pointerEvents = isTopCard ? "auto" : "none";
 
           return (
@@ -241,7 +218,6 @@ export function MainSwipeTemplate() {
     return cardsToRender;
   }, [currentIndex, users, handleSwipeLeft, handleSwipeRight, handleRestart]);
 
-  // Loading state
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -254,7 +230,6 @@ export function MainSwipeTemplate() {
     );
   }
 
-  // Error state
   if (isError) {
     return (
       <SafeAreaView style={styles.container}>
@@ -275,10 +250,8 @@ export function MainSwipeTemplate() {
 
       <LogoHeader size={100} />
 
-      {/* Card Stack */}
       <View style={styles.cardContainer}>{renderCards}</View>
 
-      {/* Action Buttons */}
       <View style={styles.buttonsContainer}>
         <ActionButtons
           onRewind={handleRewind}

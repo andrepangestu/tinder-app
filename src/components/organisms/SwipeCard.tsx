@@ -26,7 +26,6 @@ function SwipeCardComponent(
   const isMounted = useRef(true);
   const isTopRef = useRef(isTop);
 
-  // CRITICAL: Update isTopRef immediately before creating PanResponder
   isTopRef.current = isTop;
 
   const rotate = position.x.interpolate({
@@ -35,23 +34,19 @@ function SwipeCardComponent(
     extrapolate: "clamp",
   });
 
-  // Update isTopRef when isTop changes
   useEffect(() => {
     const prevValue = isTopRef.current;
     isTopRef.current = isTop;
 
-    // Reset position when becoming top card
     if (isTop && !prevValue) {
       position.setValue({ x: 0, y: 0 });
     }
   }, [isTop, user.name, user.id, position]);
 
-  // Reset position when user changes (new card appears)
   useEffect(() => {
     position.setValue({ x: 0, y: 0 });
   }, [user.id, position, user.name]);
 
-  // Cleanup on unmount
   useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -59,7 +54,6 @@ function SwipeCardComponent(
     };
   }, [user.name, user.id]);
 
-  // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     swipeLeft: () => forceSwipe("left"),
     swipeRight: () => forceSwipe("right"),
@@ -73,7 +67,6 @@ function SwipeCardComponent(
       useNativeDriver: true,
     }).start((finished) => {
       if (finished && isMounted.current) {
-        // Call callback immediately after animation finishes
         if (direction === "right") {
           onSwipeRight();
         } else {
@@ -92,12 +85,10 @@ function SwipeCardComponent(
     }).start();
   };
 
-  // Create PanResponder once - it will read from isTopRef which gets updated
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
         const shouldRespond = isTopRef.current;
-
         return shouldRespond;
       },
       onPanResponderMove: (_, gesture) => {
@@ -111,13 +102,10 @@ function SwipeCardComponent(
           return;
         }
         if (gesture.dx > SWIPE_THRESHOLD) {
-          // Swipe right - Like
           forceSwipe("right");
         } else if (gesture.dx < -SWIPE_THRESHOLD) {
-          // Swipe left - Pass
           forceSwipe("left");
         } else {
-          // Return to original position
           resetPosition();
         }
       },
@@ -156,12 +144,10 @@ function SwipeCardComponent(
         photoUrl={user.photos[0]}
       />
 
-      {/* Like label */}
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]}>
         <Animated.Text style={styles.likeText}>LIKE</Animated.Text>
       </Animated.View>
 
-      {/* Nope label */}
       <Animated.View style={[styles.nopeLabel, { opacity: nopeOpacity }]}>
         <Animated.Text style={styles.nopeText}>NOPE</Animated.Text>
       </Animated.View>
@@ -211,18 +197,12 @@ const styles = StyleSheet.create({
   },
 });
 
-// Custom comparison function for React.memo
 function arePropsEqual(prevProps: SwipeCardProps, nextProps: SwipeCardProps) {
-  // Re-render if user changes or isTop changes
   const userChanged = prevProps.user.id !== nextProps.user.id;
   const isTopChanged = prevProps.isTop !== nextProps.isTop;
-
-  // Return true if props are equal (should NOT re-render)
-  // Return false if props are different (should re-render)
   return !userChanged && !isTopChanged;
 }
 
-// Export with React.memo and forwardRef
 export const SwipeCard = React.memo(
   React.forwardRef<SwipeCardRef, SwipeCardProps>(SwipeCardComponent),
   arePropsEqual
